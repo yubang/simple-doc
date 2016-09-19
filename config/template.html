@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>simple-doc</title>
+        <style>
+            table, tr, td, th{border:1px solid black;}
+        </style>
+    </head>
+    <body>
+        <div id="content"></div>
+        <div id="code" style="display:none;">{{code}}</div>
+        <script src="/static/marked.js"></script>
+        <script>
+                document.getElementById('content').innerHTML = marked(document.getElementById('code').innerHTML);
+        </script>
+    </body>
+</html>
