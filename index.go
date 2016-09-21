@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -34,9 +33,10 @@ func getContentType(filePath string) string {
 
 // 获取不带后缀的文件名
 func getBaseFileName(filePath string) string {
+	fullFileName := path.Base(filePath)
 	suffix := path.Ext(filePath)
-	s := strings.TrimSuffix(filePath, suffix)
-	return subString(s, 1, len(s))
+	s := strings.TrimSuffix(fullFileName, suffix)
+	return s
 }
 
 // 读取文件内容
@@ -57,7 +57,7 @@ func readFile(path string) ([]byte, error) {
 // 处理静态资源文件
 func handleStatic(w http.ResponseWriter, r *http.Request) {
 	filePath := r.URL.Path
-	fmt.Print(filePath)
+
 	text, err := readFile("./" + filePath)
 	if err != nil {
 		w.WriteHeader(404)
