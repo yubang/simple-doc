@@ -1,7 +1,13 @@
 package main
 
+/**
+ * 一个简易的文档展示系统
+ * @author: yubang
+ **/
+
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -117,5 +123,12 @@ func main() {
 	startInit()
 	http.HandleFunc("/static/", handleStatic)
 	http.HandleFunc("/", readme)
-	http.ListenAndServe(":9000", nil)
+
+	settingConf := make(map[string]interface{})
+	t, _ := readFile("./config/setting.conf")
+	json.Unmarshal(t, &settingConf)
+
+	hostAndPort := settingConf["host"].(string) + ":" + settingConf["port"].(string)
+	fmt.Print("服务器监听 " + hostAndPort)
+	http.ListenAndServe(hostAndPort, nil)
 }
