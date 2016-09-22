@@ -15,13 +15,14 @@ import (
 	"strings"
 )
 
-var ContentTypeInfoMap map[string]interface{} // 全局变量
+var contentTypeInfoMap map[string]interface{} // 全局变量
+var settingConf map[string]interface{}        // 程序配置
 
 // 初始化函数
 func startInit() {
 	text, _ := readFile("./config/contentType.db")
-	ContentTypeInfoMap = make(map[string]interface{})
-	json.Unmarshal(text, &ContentTypeInfoMap)
+	contentTypeInfoMap = make(map[string]interface{})
+	json.Unmarshal(text, &contentTypeInfoMap)
 }
 
 // 获取ContentType
@@ -29,7 +30,7 @@ func getContentType(filePath string) string {
 
 	arrs := strings.Split(filePath, ".")
 	urlSuffix := arrs[len(arrs)-1]
-	for k, v := range ContentTypeInfoMap {
+	for k, v := range contentTypeInfoMap {
 		if k == "."+urlSuffix {
 			return v.(string)
 		}
@@ -100,7 +101,19 @@ func hasSuffix(s, suffix string) bool {
 	return len(s) >= len(suffix) && s[len(s)-len(suffix):] == suffix
 }
 
+// 读取markdown文件，并且渲染
 func readme(w http.ResponseWriter, r *http.Request) {
+
+	// 授权检验
+	if settingConf["auth"].(bool) {
+		cookie, err := r.Cookie(settingConf["auth_cookie_key"].(string))
+		if err != nil || cookie.Value != settingConf["auth_token"] {
+			w.Header().Set("Location", "/static/login.html")
+			w.WriteHeader(302)
+			return
+		}
+	}
+
 	filePath := r.URL.Path
 
 	if hasSuffix("/", filePath) {
@@ -119,12 +132,26 @@ func readme(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// 处理登录问题
+func handleLogin(w http.ResponseWriter, r *http.Request) {
+	username := r.FormValue("username")
+	password := r.FormValue("password")
+	if username == settingConf["username"].(string) && password == settingConf["password"].(string) {
+		cookie := http.Cookie{Name: settingConf["auth_cookie_key"].(string), Value: settingConf["auth_token"].(string), Path: "/", MaxAge: int(settingConf["auth_cookie_timeout"].(float64))}
+		http.SetCookie(w, &cookie)
+		w.Write([]byte("ok"))
+	} else {
+		w.Write([]byte("fail"))
+	}
+}
+
 func main() {
 	startInit()
 	http.HandleFunc("/static/", handleStatic)
+	http.HandleFunc("/login.go", handleLogin)
 	http.HandleFunc("/", readme)
 
-	settingConf := make(map[string]interface{})
+	settingConf = make(map[string]interface{})
 	t, _ := readFile("./config/setting.conf")
 	json.Unmarshal(t, &settingConf)
 
