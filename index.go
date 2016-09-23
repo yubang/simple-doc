@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"strconv"
 	"strings"
 )
 
@@ -71,6 +72,7 @@ func handleStatic(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("not found!"))
 	} else {
 		w.Header().Set("Content-Type", getContentType(filePath))
+		w.Header().Set("Cache-Control", "max-age="+strconv.Itoa(int(settingConf["static_timeout"].(float64))))
 		w.Write(text)
 	}
 
